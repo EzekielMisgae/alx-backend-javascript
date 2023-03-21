@@ -1,23 +1,23 @@
-/* eslint-disable */
 const express = require('express');
-const countStudents = require('./utils');
+
+const databaseFilePath = process.argv[2];
+const countStudents = require('./3-read_file_async');
 
 const app = express();
-const path = process.argv[2];
 const port = 1245;
 
-app.get('/', (_, res) => {
+app.get('/', (req, res) => {
   res.send('Hello Holberton School!');
 });
 
-app.get('/students', (_, res) => {
-  countStudents(path)
-    .then((data) => res.send(`This is the list of our students\n${data}`))
-    .catch(() => {
-      res.write('This is the list of our students\n');
-      res.write('Cannot load the database');
-      res.end();
-    });
+app.get('/students', async (req, res) => {
+  const message = 'This is the list of our students';
+  try {
+    const students = await countStudents(databaseFilePath);
+    res.send(`${message}\n${students.join('\n')}`);
+  } catch (error) {
+    res.send(`${message}\n${error.message}`);
+  }
 });
 
 app.listen(port);

@@ -1,38 +1,46 @@
-/* eslint-disable */
 const fs = require('fs');
 
-const countStudents = (path) => {
-  const promise = (res, rej) => {
-    fs.readFile(path, 'utf8', (err, dataCollected) => {
-      if (err) rej(Error('Cannot load the database'));
-      const messages = [];
-      let message;
-      const content = dataCollected.toString().split('\n');
-      let students = content.filter((item) => item);
-      students = students.map((item) => item.split(','));
-      const nStudents = students.length ? students.length - 1 : 0;
-      message = `Number of students: ${nStudents}`;
+function countStudents(path) {
+  return new Promise((resolve, reject) => {
+    fs.readFile(path, 'utf-8', (error, data) => {
+      if (error) {
+        reject(Error('Cannot load the database'));
+        return;
+      }
+
+      const response = [];
+      const content = data.toString().split('\n');
+
+      const students = content.filter(Boolean).slice(1);
+      let message = `Number of students: ${students.length}`;
       console.log(message);
-      messages.push(message);
-      const subjects = {};
-      for (const i in students) {
-        if (i !== 0) {
-          if (!subjects[students[i][3]]) subjects[students[i][3]] = [];
-          subjects[students[i][3]].push(students[i][0]);
+
+      response.push(message);
+
+      const fields = {};
+      for (const student of students) {
+        const stData = student.split(',');
+
+        const stFirstName = stData[0];
+        const stField = stData[stData.length - 1];
+
+        if (fields[stField]) {
+          fields[stField][0] += 1;
+          fields[stField].push(stFirstName);
+        } else {
+          fields[stField] = [1, stFirstName];
         }
       }
-      delete subjects.subject;
-      for (const key of Object.keys(subjects)) {
-        message = `Number of students in ${key}: ${
-          subjects[key].length
-        }. List: ${subjects[key].join(', ')}`;
+      for (const [k, v] of Object.entries(fields)) {
+        const firstName = v.slice(1).join(', ');
+        message = `Number of students in ${k}: ${v[0]}. List: ${firstName}`;
         console.log(message);
-        messages.push(message);
+        response.push(message);
       }
-      res(messages);
+
+      resolve(response);
     });
-  };
-  return new Promise(promise);
-};
+  });
+}
 
 module.exports = countStudents;
